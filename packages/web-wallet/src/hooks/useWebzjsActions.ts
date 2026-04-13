@@ -488,7 +488,7 @@ export function useWebZjsActions(): WebzjsActions {
           }
         } catch (syncErr) {
           consecutiveFailures++;
-          console.warn(`Full resync: sync round ${round} failed (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, syncErr);
+          console.debug(`Full resync: sync round ${round} failed (${consecutiveFailures}/${MAX_CONSECUTIVE_FAILURES}):`, syncErr);
 
           if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
             throw syncErr; // give up after too many consecutive failures
@@ -496,7 +496,7 @@ export function useWebZjsActions(): WebzjsActions {
 
           // Back off longer after failures
           const backoff = SYNC_ROUND_DELAY * Math.pow(2, consecutiveFailures - 1);
-          console.info(`Full resync: backing off ${backoff}ms before retry`);
+          console.debug(`Full resync: backing off ${backoff}ms before retry`);
           await new Promise(r => setTimeout(r, backoff));
         }
       }

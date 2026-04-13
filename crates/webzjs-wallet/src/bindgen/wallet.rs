@@ -297,7 +297,7 @@ impl WebWallet {
         match sync_handler.await {
             Ok(Ok(())) => Ok(()),
             Ok(Err(err_string)) => {
-                tracing::error!("Sync error: {}", err_string);
+                tracing::warn!("Sync error (will be retried by caller): {}", err_string);
                 Err(Error::Sync(err_string))
             }
             Err(panic_error) => {
@@ -396,7 +396,9 @@ impl WebWallet {
             })
             .unwrap_throw()
             .join_async();
-        let txids = sync_handler.await.unwrap();
+        let txids = sync_handler.await.map_err(|e| {
+            Error::Generic(format!("Transaction creation thread panicked: {:?}", e))
+        })?;
 
         let flattened_txid_bytes = txids.iter().flat_map(|&x| x.as_ref().clone()).collect();
         Ok(flattened_txid_bytes)
