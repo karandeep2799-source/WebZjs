@@ -91,9 +91,12 @@ impl PaymentRequest {
         };
         let other_params = serde_wasm_bindgen::from_value(other_params)?;
 
-        match zip321::Payment::new(address, Some(amount), memo, label, message, other_params) {
-            Ok(payment) => Ok(PaymentRequest(payment)),
-            Err(_) => Err(Error::UnsupportedMemoRecipient),
+        if let Some(payment) =
+            zip321::Payment::new(address, Some(amount), memo, label, message, other_params)
+        {
+            Ok(PaymentRequest(payment))
+        } else {
+            Err(Error::UnsupportedMemoRecipient)
         }
     }
 

@@ -32,8 +32,7 @@ use zcash_client_backend::data_api::wallet::{
     propose_shielding, propose_transfer, ConfirmationsPolicy, SpendingKeys,
 };
 use zcash_client_backend::data_api::{
-    Account, AccountBirthday, AccountPurpose, InputSource, TransparentOutputFilter, WalletRead,
-    WalletSummary, WalletWrite,
+    Account, AccountBirthday, AccountPurpose, InputSource, WalletRead, WalletSummary, WalletWrite,
 };
 use zcash_client_backend::data_api::{WalletCommitmentTrees, Zip32Derivation};
 use zcash_client_backend::fees::standard::MultiOutputChangeStrategy;
@@ -134,7 +133,6 @@ where
         + Hash
         + Default
         + Send
-        + Sync
         + ConditionallySelectable
         + Serialize
         + DeserializeOwned
@@ -544,7 +542,6 @@ where
             &from_addrs,
             account_id,
             self.min_confirmations, // librustzcash operates under the assumption of zero or one conf being the same but that could change.
-            TransparentOutputFilter::All,
         )
         .map_err(|e| {
             tracing::error!("pczt_shield: propose_shielding failed: {:?}", e);
