@@ -7,12 +7,17 @@ function zatsToZec(zats: number): number {
 }
 
 function zecToZats(zecAmount: string): bigint {
+  const trimmed = zecAmount.trim();
 
-  if (!/^\d+(\.\d+)?$/.test(zecAmount)) {
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(trimmed)) {
     throw new Error('Invalid ZEC format: must be positive number');
   }
 
-  const amount = new Decimal(zecAmount);
+  const amount = new Decimal(trimmed);
+
+  if (!amount.isPositive() || amount.isZero()) {
+    throw new Error('Invalid ZEC format: must be positive number');
+  }
 
   if (amount.decimalPlaces() > 8) {
     throw new Error('Maximum 8 decimal places allowed');
