@@ -3,12 +3,12 @@ import crypto from 'crypto';
 const orders = new Map();
 const processedWebhookEvents = new Set();
 
-const keyId = process.env.RAZORPAY_KEY_ID;
-const keySecret = process.env.RAZORPAY_KEY_SECRET;
-const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+const getKeyId = () => process.env.RAZORPAY_KEY_ID;
+const getKeySecret = () => process.env.RAZORPAY_KEY_SECRET;
+const getWebhookSecret = () => process.env.RAZORPAY_WEBHOOK_SECRET;
 
 function assertConfigured() {
-  if (!keyId || !keySecret) {
+  if (!getKeyId() || !getKeySecret()) {
     const error = new Error('Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.');
     error.status = 503;
     throw error;
@@ -17,7 +17,7 @@ function assertConfigured() {
 
 function basicAuth() {
   assertConfigured();
-  return `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`;
+  return `Basic ${Buffer.from(`${getKeyId()}:${getKeySecret()}`).toString('base64')}`;
 }
 
 async function razorpayRequest(path, options = {}) {
@@ -41,6 +41,8 @@ async function razorpayRequest(path, options = {}) {
 }
 
 export function getPublicConfig() {
+  const keyId = getKeyId();
+  const keySecret = getKeySecret();
   return { keyId: keyId || null, enabled: Boolean(keyId && keySecret) };
 }
 
@@ -87,13 +89,14 @@ function timingSafeHexEqual(a, b) {
 export function verifyPaymentSignature({ orderId, paymentId, signature }) {
   assertConfigured();
   const expected = crypto
-    .createHmac('sha256', keySecret)
+    .createHmac('sha256', getKeySecret())
     .update(`${orderId}|${paymentId}`)
     .digest('hex');
   return timingSafeHexEqual(expected, signature);
 }
 
 export function verifyWebhookSignature(rawBody, signature) {
+  const webhookSecret = getWebhookSecret();
   if (!webhookSecret || !signature) return false;
   const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
   return timingSafeHexEqual(expected, signature);
