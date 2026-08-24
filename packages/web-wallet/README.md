@@ -1,50 +1,38 @@
-# React + TypeScript + Vite
+# WebZjs Web Wallet
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Razorpay Standard Checkout
 
-Currently, two official plugins are available:
+The web wallet now includes a Test Mode-ready Razorpay Standard Checkout flow.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Server environment
 
-## Expanding the ESLint configuration
+Set these variables in `packages/web-wallet/.env`:
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```env
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxx
+RAZORPAY_WEBHOOK_SECRET=use-a-long-random-secret
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+`RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` are server-only secrets. Never expose them to browser code or commit real credentials.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+### Run locally
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```bash
+yarn workspace @chainsafe/webzjs-web-wallet run dev
 ```
+
+Open the wallet, connect the Snap, then use **Payment** in the dashboard navigation.
+
+### Payment flow
+
+1. The browser requests an order from `POST /api/razorpay/orders`.
+2. The Express backend creates the Razorpay Order with the secret credentials.
+3. The browser opens Razorpay Checkout with the returned `order_id`.
+4. The Checkout handler sends the payment ID, order ID, and signature to `POST /api/razorpay/verify`.
+5. The backend verifies the HMAC signature and fetches the payment from Razorpay before reporting success.
+6. `POST /api/razorpay/webhook` validates raw-body webhook signatures and tracks captured/failed payment events.
+
+### Production note
+
+The current server-side order registry is intentionally lightweight for the existing development server. Before production, replace the in-memory order/event maps in `server/razorpay.js` with durable storage and move webhook processing to a background queue. The payment should only be fulfilled after Razorpay reports it as `captured`.
