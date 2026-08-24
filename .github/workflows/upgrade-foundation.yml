@@ -1,0 +1,39 @@
+name: Upgrade Foundation
+
+on:
+  push:
+    branches: [main, upgrade/2026-foundation]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  rust-check:
+    name: Rust checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Check workspace
+        run: cargo check --workspace --all-targets
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  repository-sanity:
+    name: Repository sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required files
+        run: |
+          test -f Cargo.toml
+          test -f README.md
+          test -d crates/webzjs-wallet
+          test -d crates/webzjs-keys
+          test -d packages
