@@ -1,12 +1,16 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-const storePath = process.env.RAZORPAY_STORE_PATH || join(process.cwd(), 'data', 'razorpay.json');
-
+let storePath;
 let store = { orders: {}, events: {} };
 let writeQueue = Promise.resolve();
 
+function getStorePath() {
+  return storePath || process.env.RAZORPAY_STORE_PATH || join(process.cwd(), 'data', 'razorpay.json');
+}
+
 async function ensureStore() {
+  storePath = getStorePath();
   await mkdir(dirname(storePath), { recursive: true });
   try {
     store = JSON.parse(await readFile(storePath, 'utf8'));
@@ -19,9 +23,10 @@ async function ensureStore() {
 }
 
 async function persist() {
-  const next = `${storePath}.tmp`;
+  const path = getStorePath();
+  const next = `${path}.tmp`;
   await writeFile(next, JSON.stringify(store, null, 2), 'utf8');
-  await rename(next, storePath);
+  await rename(next, path);
 }
 
 function enqueuePersist() {
