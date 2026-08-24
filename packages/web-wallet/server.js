@@ -61,6 +61,11 @@ async function run() {
       return res.status(400).json({ ok: false, error: 'Invalid webhook JSON' });
     }
 
+    const createdAt = Number(event?.created_at);
+    if (createdAt && Math.abs(Date.now() / 1000 - createdAt) > 300) {
+      return res.status(400).json({ ok: false, error: 'Stale Razorpay webhook event' });
+    }
+
     if (!markWebhookProcessed(event?.id)) {
       return res.status(200).json({ ok: true, duplicate: true });
     }
@@ -95,9 +100,16 @@ async function run() {
 
   app.post('/api/razorpay/verify', async (req, res) => {
     try {
-      const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body || {};
+      const {
+        razorpay_order_id: orderId,
+        razorpay_payment_id: paymentId,
+        razorpay_signature: signature,
+      } = req.body || {};
+
       if (!orderId || !paymentId || !signature) {
-        return res.status(400).json({ error: 'razorpay_order_id, razorpay_payment_id and razorpay_signature are required' });
+        return res.status(400).json({
+          error: 'razorpay_order_id, razorpay_payment_id and razorpay_signature are required',
+        });
       }
 
       const result = await verifyAndFetchPayment({ orderId, paymentId, signature });
