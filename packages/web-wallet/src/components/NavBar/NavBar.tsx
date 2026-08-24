@@ -7,7 +7,7 @@ import {
   ArrowTransferSvg,
   SummarySvg,
   ShieldSvg,
-  ClockSvg
+  ClockSvg,
 } from '../../assets';
 
 interface NavItem {
@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     label: 'Transfer Balance',
     icon: <ArrowTransferSvg />,
   },
-    {
+  {
     to: 'shield-balance',
     label: 'Shield Balance',
     icon: <ShieldSvg />,
@@ -41,12 +41,17 @@ const navItems: NavItem[] = [
     to: 'receive',
     label: 'Receive',
     icon: <ArrowReceiveSvg />,
-  }
+  },
+  {
+    to: 'payment',
+    label: 'Payment',
+    icon: <span aria-hidden="true">₹</span>,
+  },
 ];
 
 function NavBar() {
   return (
-    <nav className="flex space-x-9 mb-3 justify-center self-center items-center align-middle">
+    <nav className="flex flex-wrap gap-x-9 gap-y-2 mb-3 justify-center self-center items-center align-middle px-4">
       {navItems.map((item) => (
         <NavLink
           key={item.to}
@@ -64,9 +69,7 @@ function NavBar() {
                 { 'navbar-link-active': isActive },
               )}
             >
-              <span className="text-brand-grey10 text-sm  mr-2">
-                {item.icon}
-              </span>
+              <span className="text-brand-grey10 text-sm mr-2">{item.icon}</span>
               {item.label}
             </span>
           )}
