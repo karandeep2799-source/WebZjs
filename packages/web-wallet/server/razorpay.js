@@ -48,13 +48,19 @@ export function getPublicConfig() {
 
 export async function createOrder({ amount, currency = 'INR', receipt, notes = {} }) {
   assertConfigured();
-  if (!Number.isInteger(amount) || amount < 100) {
-    const error = new Error('Amount must be an integer number of paise and at least ₹1.');
+  if (!Number.isInteger(amount) || amount < 100 || amount > 50_000_000) {
+    const error = new Error('Amount must be an integer number of paise between ₹1 and ₹5,00,000.');
     error.status = 400;
     throw error;
   }
 
   const safeReceipt = receipt || `webzjs_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  if (safeReceipt.length > 40) {
+    const error = new Error('Receipt must be 40 characters or fewer.');
+    error.status = 400;
+    throw error;
+  }
+
   const order = await razorpayRequest('/orders', {
     method: 'POST',
     body: JSON.stringify({
@@ -62,7 +68,7 @@ export async function createOrder({ amount, currency = 'INR', receipt, notes = {
       currency,
       receipt: safeReceipt,
       notes,
-      payment_capture: 1,
+      capture: 'automatic',
     }),
   });
 
@@ -117,8 +123,8 @@ export async function verifyAndFetchPayment({ orderId, paymentId, signature }) {
   }
 
   const payment = await razorpayRequest(`/payments/${encodeURIComponent(paymentId)}`);
-  if (payment.order_id !== orderId) {
-    const error = new Error('Payment does not belong to the expected Razorpay order.');
+  if (payment.order_id !== orderId || payment.amount !== localOrder.amount || payment.currency !== localOrder.currency) {
+    const error = new Error('Payment does not match the expected Razorpay order.');
     error.status = 400;
     throw error;
   }
