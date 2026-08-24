@@ -1,0 +1,44 @@
+name: Upgrade Foundation
+
+on:
+  push:
+    branches: [main, upgrade/2026-foundation]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  rust-check:
+    name: Rust checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2025-01-07
+          components: rustfmt, clippy, rust-src
+          targets: wasm32-unknown-unknown
+      - name: Check formatting
+        run: cargo +nightly-2025-01-07 fmt --all -- --check
+      - name: Check workspace
+        run: cargo +nightly-2025-01-07 check --workspace --all-targets
+      - name: Clippy
+        run: cargo +nightly-2025-01-07 clippy --workspace --all-targets -- -D warnings -A deprecated -A unused-variables -A unused-imports
+
+  repository-sanity:
+    name: Repository sanity
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required files
+        run: |
+          test -f Cargo.toml
+          test -f Cargo.lock
+          test -f rust-toolchain.toml
+          test -f README.md
+          test -f SECURITY.md
+          test -d crates/webzjs-wallet
+          test -d crates/webzjs-keys
+          test -d packages
