@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local payment persistence
+/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
